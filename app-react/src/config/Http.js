@@ -12,12 +12,12 @@ export const HttpAuth = Axios.create({
 HttpAuth.interceptors.request.use(
     async (config) => {
         config.headers.authorization = 'Bearer ' + await localStorage.getItem('access_token')
-        return config
+        return config;
     }
 )
 
 HttpAuth.interceptors.response.use(response => {
-    return response
+    return response;
 }, error => {
     if(error.response){
         if(error.response.status === 401){
@@ -26,3 +26,15 @@ HttpAuth.interceptors.response.use(response => {
         }
     }
 })
+
+export const HttpUpload = Axios.create({
+    baseURL: apiUrl
+})
+
+HttpUpload.interceptors.request.use(
+    async (config) => {
+        config.headers.authorization = 'Bearer ' + await localStorage.getItem('access_token')
+        config.headers["Content-Type"] = "multipart/form-data"
+        return config
+    }
+)

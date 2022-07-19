@@ -27,7 +27,6 @@ export default function Notify(){
             }}
             open={notify.open}
             autoHideDuration={notify.time}
-            
             onClose={() => dispatch(changeNotify({open: false}))} 
         >
                 

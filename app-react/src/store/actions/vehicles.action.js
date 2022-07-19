@@ -1,12 +1,17 @@
-import {HttpAuth} from '../../config/Http'
-import {changeLoading} from './loading.action'
+import { debounce } from '@material-ui/core';
+import {HttpAuth, HttpUpload} from '../../config/Http';
+import {changeLoading} from './loading.action';
+import {changeNotify} from './notify.action';
 
 export const actionTypes = {
     INDEX: 'VEHICLE_INDEX',
     DESTROY: 'VEHICLE_DESTROY',
     CHANGE: 'VEHICLE_CHANGE',
     SUCCESS: 'VEHICLE_SUCCESS',
-    ERROR: 'VEHICLE_ERROR'
+    ERROR: 'VEHICLE_ERROR',
+    UPLOAD_PHOTO: 'VEHICLE_UPLOAD_PHOTO',
+    DELETE_PHOTO: 'VEHICLE_DELETE_PHOTO',
+    REORDER_PHOTO: 'VEHICLE_REORDER_PHOTO'
 }
 
 export const change = (payload) => ({
@@ -89,7 +94,7 @@ export const destroyResponse = (payload) => ({
 export const destroy = (id) => dispatch => {
     return HttpAuth.delete('/vehicles/' + id)
         .then(res => {
-            if(typeof res != 'undefined'){
+            if(typeof res !== 'undefined'){
                 if(res.data.status === 200){
                     dispatch(destroyResponse(id))
                 }
@@ -151,4 +156,77 @@ export const cep = (zipCode) => dispatch => {
             cep: zipCode
         }).then(res => typeof res !== 'undefined' && dispatch(change(res.data)));
     }
+}
+
+export const uploadPhotoResponse = (payload) => ({
+    type: actionTypes.UPLOAD_PHOTO,
+    payload
+});
+
+export const uploadPhoto = (item) => dispatch => {
+    dispatch(indexResponse({upload_photo: true}));
+
+    return HttpUpload.post('upload/vehicle', item)
+        .then(res => {
+            dispatch(indexResponse({upload_photo: false}))
+            if(typeof res !== 'undefined'){
+                if(res.data.error){
+                    dispatch(changeNotify({
+                        open: true,
+                        msg: res.data.error,
+                        class: 'error'
+                    }));
+                }
+
+                if(res.data.id){
+                    dispatch(uploadPhotoResponse(res.data));
+                }
+            }
+        })
+}
+
+export const deletePhotoResponse = (payload) => ({
+    type: actionTypes.DELETE_PHOTO,
+    payload
+})
+
+export const deletePhoto = (id) => dispatch => {
+    return HttpAuth.delete('upload/vehicle/'+id)
+        .then(res => {
+            if(typeof res !== 'undefined'){
+                if(res.data.error){
+                    dispatch(changeNotify({
+                        open: true,
+                        msg: res.data.error,
+                        class: 'error'
+                    }))
+                }
+
+                if(res.data.success){
+                    dispatch(deletePhotoResponse(id));
+                }
+            }
+        })
+}
+
+export const reorderPhotoResponse = (payload) => ({
+    type: actionTypes.REORDER_PHOTO,
+    payload
+})
+
+export const reorderPhoto = (pos, data) => dispatch => {
+    dispatch(reorderPhotoResponse(data));
+
+    return HttpAuth.put('upload/vehicle/null', pos)
+        .then(res => {
+            if(typeof res !== 'undefined'){
+                if(res.data.success){
+                    dispatch(changeNotify({
+                        open: true,
+                        msg: res.data.success,
+                        class: 'success'
+                    }))
+                }
+            }
+        })
 }

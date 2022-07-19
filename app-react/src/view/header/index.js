@@ -30,6 +30,7 @@ export default function Header(props){
                     <Typography variant="h6" >
                         {props.title}
                     </Typography>
+                    {props.button}
                 </Toolbar>
           </AppBar>
                 :

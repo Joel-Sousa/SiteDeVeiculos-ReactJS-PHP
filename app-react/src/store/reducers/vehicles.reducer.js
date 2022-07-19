@@ -9,7 +9,8 @@ const initialState = {
     vehicle_model: [],
     vehicle_version: [],
     success: false,
-    error: {}
+    error: {},
+    upload_photo: false,
 }
 
 export default (state = initialState, {type, payload, isLoadMore}) => {
@@ -48,6 +49,35 @@ export default (state = initialState, {type, payload, isLoadMore}) => {
             return{
                 ...state,
                 error: payload
+            }
+
+        case actionTypes.UPLOAD_PHOTO:
+            return{
+                ...state,
+                vehicle: {
+                    ...state.vehicle,
+                    vehicle_photos:[
+                        ...state.vehicle.vehicle_photos.concat(payload)
+                    ]
+                }
+            }
+
+        case actionTypes.DELETE_PHOTO:
+            return{
+                ...state,
+                vehicle: {
+                    ...state.vehicle,
+                    vehicle_photos: state.vehicle.vehicle_photos.filte(e => e.id !== payload)
+                }
+            }
+
+        case actionTypes.REORDER_PHOTO: 
+            return{
+                ...state,
+                vehicle: {
+                    ...state.vehicle,
+                    vehicle_photos: payload
+                }
             }
 
         default: 

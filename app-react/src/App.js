@@ -7,6 +7,7 @@ import {Provider} from 'react-redux'
 import {store} from './store/store'
 import {Loading, Notify, Alert} from './view/components'
 import './global.css'
+import Navigation from './view/navigation';
 
 const theme = createTheme({
   palette:{
@@ -32,6 +33,7 @@ const App = () => (
         <Loading/>
         <Alert/>
         <Notify/>
+        <Navigation/>
         <Routs/>
     </ThemeProvider>
   </Provider>

@@ -21,6 +21,8 @@ use App\Models\Vehicle_type;
 use App\Models\Vehicle_version;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class VehiclesController extends Controller
 {
@@ -50,7 +52,22 @@ class VehiclesController extends Controller
 
     public function index()
     {
-        //
+        $vehicles = Vehicle::where('user_id', $this->user->id)
+                    ->where('status', 1)
+                    ->with(
+                        'cover',
+                        'vehicle_brand',
+                        'vehicle_fuel',
+                        'vehicle_color',
+                        'vehicle_gearbox',
+                    )
+                    ->paginate(env('APP_PAGINATE'));
+                    $vehicles->transform(function($vehicle){
+                        $vehicle->vehicle_model = $vehicle->vehicle_model();
+                        $vehicle->vehicle_version = $vehicle->vehicle_version();
+                        return $vehicle;
+                    });
+        return compact('vehicles');
     }
    
     public function store()
@@ -61,22 +78,76 @@ class VehiclesController extends Controller
                         'status' => 0
                     ]);
 
+        $vehicle = $vehicle->fresh('vehicle_photos');
+
         return array_merge(['vehicle' => $vehicle], $this->getData());
     }
 
     public function show($id)
     {
-        //
+        $vehicle = Vehicle::where('user_id', $this->user->id)
+                    ->with('vehicle_photos')
+                    ->find($id);
+
+        if($vehicle->id){
+            $vehicle_brand = $this->brand($vehicle->vehicle_type);
+            $vehicle_model = $this->model($vehicle->vehicle_type, $vehicle->vehicle_brand);
+            $vehicle_version = $this->version($vehicle->vehicle_brand, $vehicle->vehicle_model);
+
+            return array_merge(['vehicle' => $vehicle],
+                                $vehicle_brand,
+                                $vehicle_model,
+                                $vehicle_version,
+                                $this->getData());
+        }
+        return $this->error('Veiculo nao encontrado!');
+
     }
 
     public function update(Request $request, $id)
     {
-        //
+        $request['vehicle_photos'] = $id;
+        $validator = Validator::make($request->all(), Vehicle::$rules);
+
+        if($validator->fails())
+            return response()->json(['error' => $validator->errors()], 200);
+
+        $vehicle = Vehicle::where('user_id', $this->user->id)->find($id);
+
+        if($vehicle->id){
+            $vehicle->fill($request->all());
+            $vehicle->status = 1;
+            $vehicle->uf_url = $this->validateUrl($request->uf);
+            $vehicle->city_url = $this->validateUrl($request->city);
+
+            if($vehicle->save())
+                return $this->success('Dados atualizados com sucesso');
+            
+            return $this->error('Veiculo nao encontrado');
+        }
+
     }
 
     public function destroy($id)
     {
-        //
+        $vehicle = Vehicle::where('user_id', $this->user->id)
+                    ->with('vehicle_photos')
+                    ->find($id);
+
+        if($vehicle->id){
+            $dir = 'vehicles/'.$this->user->id.'/'.$id;
+
+            if($vehicle->vehicle_photos()->delete()){
+                Storage::deleteDirectory($dir);
+            }
+
+            if($vehicle->delete()){
+                return $this->success('Veiculo excluido com sucesso');
+            }
+            return $this->error('Erro ao excluir veiculo.');
+        }
+        return $this->error('Veiculo nao encontrado.');
+
     }
 
     public function brand($vehicle_type){
@@ -90,7 +161,7 @@ class VehiclesController extends Controller
                             ->where('brand_id', $vehicle_brand)
                             ->orderBy('label')
                             ->get();
-                            $tst = $vehicle_model->all();
+                            // $tst = $vehicle_model->all();
         return compact('vehicle_model');
     }
 

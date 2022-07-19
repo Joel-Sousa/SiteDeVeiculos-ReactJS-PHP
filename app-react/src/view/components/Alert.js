@@ -9,7 +9,7 @@ export default function Alert(){
     const alert = useSelector(state => state.alertReducer)
 
     if(alert.open){
-        setTimeout(() => dispatch(changeAlert({open: false})), alert.time       )
+        setTimeout(() => dispatch(changeAlert({open: false})), alert.time)
     }
 
     return (

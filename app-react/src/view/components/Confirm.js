@@ -9,7 +9,7 @@ export default function Confirm(props){
             open={open}
             onClose={() => onClose()}>
                 <DialogTitle disableTypography><h6>{title || 'Tem certeza?'}</h6></DialogTitle>
-                <DialogActions className="justify-content-center mb-lg-2">
+                <DialogActions className="justify-content-center mb-2">
                     <Button onClick={() => {
                         onClose()
                         onConfirm()
